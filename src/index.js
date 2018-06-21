@@ -1,2 +1,6 @@
 // @flow
-export {default as List} from './list';
+import ListClass from './list';
+
+export function List<T>(list: T[]): ListClass<T> {
+	return new ListClass(list, []);
+}

@@ -1,117 +1,129 @@
 // @flow
-type Manipulator<T> =
-	(arg: T, i: number, cancel: () => void) => any;
+import LazyBase from './base';
 
-interface ListAPI<T> {
-	each(func: (T) => any): void;
-	finish(): T[];
-	take(amount: number): T[];
-	some(predicate: (T) => boolean): boolean;
-	every(predicate: (T) => boolean): boolean;
+type Updator = {|
+	filter: () => void,
+	stop: () => void,
+	set: (value: any) => void,
+|};
 
-	map<U>(predicate: (T, number) => U): ListAPI<U>;
-	filter(predicate: (T, number) => boolean): ListAPI<T>;
-}
+type Mutator<T> = (arg: T, i: number, updator: Updator) => any;
 
-function iterate<T, U>(
-	origin: T[],
-	manipulators: Manipulator<T>[],
-	func: (U, stop: () => any) => any,
-) {
-	const cancel = () => {
-		filtered = true;
-	};
-	const stop = () => {
-		stopped = true;
-	};
-	let returnedCount = 0;
-	let stopped = false;
-	let filtered;
 
-	for (let i = 0; i < origin.length; i++) {
-		let value: any = origin[i];
+export default class List<T> extends LazyBase<
+	T,
+	T[],
+	Mutator<T>
+> {
+	constructor(data: T[], mutators: Mutator<T>[]) {
+		super(data, mutators);
+	}
 
-		filtered = false;
+	__withNewMutator<U>(mutator: Mutator<T>): List<U> {
+		return (new List(this._data, this._mutators.concat(mutator)): any);
+	}
 
-		for (let j = 0; j < manipulators.length && !filtered; j++) {
-			value = manipulators[j](value, returnedCount, cancel);
-		}
+	__iterate<T, U>(func: (U, stop: () => any) => any) {
+		const mutators = this._mutators;
+		const origin = this._data;
+		const updator = {
+			filter: () => {
+				filtered = true;
+			},
+			stop: () => {
+				stopped = true;
+			},
+			set: (nextValue) => {
+				value = nextValue;
+			},
+		};
+		let returnedCount = 0;
+		let stopped = false;
+		let filtered;
+		let value;
 
-		if (!filtered) {
-			returnedCount++;
-			func(value, stop);
-			if (stopped) {
-				return;
+		for (let i = 0; i < origin.length; i++) {
+			filtered = false;
+			value = origin[i];
+
+			for (let j = 0; j < mutators.length && !filtered; j++) {
+				mutators[j](value, returnedCount, updator);
+			}
+
+			if (!filtered) {
+				returnedCount++;
+				func((value: any), updator.stop);
+				if (stopped) {
+					return;
+				}
 			}
 		}
 	}
-}
 
-export default function List<T>(origin: T[]): ListAPI<T> {
-	const manipulators: Manipulator<T>[] = [];
+	finish() {
+		const arr = [];
+		this.__iterate(item => arr.push(item));
+		return arr;
+	}
 
-	const list: ListAPI<T> = {
-		each(func: (T) => any) {
-			iterate(origin, manipulators, func);
-		},
+	take(amount: number) {
+		if (amount === 0) return [];
 
-		finish() {
-			const arr = [];
-			iterate(origin, manipulators, item => arr.push(item));
-			return arr;
-		},
+		const arr = [];
+		this.__iterate((item, stop) => {
+			if (arr.push(item) === amount) {
+				stop();
+			}
+		});
+		return arr;
+	}
 
-		take(amount: number) {
-			if (amount === 0) return [];
+	some(predicate: (T) => bool) {
+		let found = false;
 
-			const arr = [];
-			iterate(origin, manipulators, (item, stop) => {
-				if (arr.push(item) === amount) {
-					stop();
-				}
-			});
-			return arr;
-		},
+		this.__iterate((val, stop) => {
+			if (predicate(val)) {
+				stop();
+				found = true;
+			}
+		});
+		return found;
+	}
 
-		some(predicate: (T) => boolean) {
-			let found = false;
+	every(predicate: (T) => bool) {
+		let failed = false;
 
-			iterate(origin, manipulators, (val, stop) => {
-				if (predicate(val)) {
-					stop();
-					found = true;
-				}
-			});
-			return found;
-		},
+		this.__iterate((val, stop) => {
+			if (predicate(val)) {
+				stop();
+				failed = true;
+			}
+		});
+		return !failed;
+	}
 
-		every(predicate: (T) => boolean) {
-			let failed = false;
+	// mutators
+	map<U>(func: (T, number) => U): List<U> {
+		return this.__withNewMutator((val, i, updator) => {
+			updator.set(func(val, i));
+		});
+	}
 
-			iterate(origin, manipulators, (val, stop) => {
-				if (predicate(val)) {
-					stop();
-					failed = true;
-				}
-			});
-			return !failed;
-		},
+	filter(func: (T, number) => bool): List<T> {
+		return this.__withNewMutator((val, i, updator): any => {
+			if (!func(val, i)) {
+				updator.filter();
+			}
+		});
+	}
 
-		map<U>(func: (T, number) => U) {
-			manipulators.push(func);
-			return (list: any);
-		},
+	slice(from: number, to: number): List<T> {
+		let sliced = 0;
 
-		filter(func: (T, number) => boolean) {
-			manipulators.push((v, i, cancel): any => {
-				if (!func(v, i)) {
-					cancel();
-				}
-				return v;
-			});
-			return list;
-		},
-	};
-
-	return list;
+		return this.__withNewMutator((val, _, updator) => {
+			if (sliced < from) updator.filter();
+			if (sliced >= to) updator.stop();
+			sliced += 1;
+		});
+	}
 }
