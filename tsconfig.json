@@ -1,0 +1,9 @@
+{
+	"target": "ES6",
+	"include": [
+		"src/**.ts",
+	],
+	"compilerOptions": {
+		"downlevelIteration": true,
+	},
+}

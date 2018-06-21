@@ -1,0 +1,16 @@
+{
+  "name": "lazy-structs-js",
+  "version": "0.0.1",
+  "description": "a lazy evaluated structs for js",
+  "main": "src/index.js",
+  "repository": "https://github.com/itamar244/lazy-structs-js.git",
+  "author": "itamar244 <itamary24@gmail.com>",
+  "license": "MIT",
+  "private": false,
+  "devDependencies": {
+    "@types/node": "^10.3.4",
+    "esm": "^3.0.52",
+    "ts-node": "^6.1.2",
+    "typescript": "^2.9.2"
+  }
+}
