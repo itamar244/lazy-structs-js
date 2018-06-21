@@ -1,9 +1,21 @@
-type Manipulator<T, U> =
-	(arg: T, i: number, cancel: () => void) => U;
+// @flow
+type Manipulator<T> =
+	(arg: T, i: number, cancel: () => void) => any;
+
+interface ListAPI<T> {
+	each(func: (T) => any): void;
+	finish(): T[];
+	take(amount: number): T[];
+	some(predicate: (T) => boolean): boolean;
+	every(predicate: (T) => boolean): boolean;
+
+	map<U>(predicate: (T, number) => U): ListAPI<U>;
+	filter(predicate: (T, number) => boolean): ListAPI<T>;
+}
 
 function iterate<T, U>(
 	origin: T[],
-	manipulators: Manipulator<T, U>[],
+	manipulators: Manipulator<T>[],
 	func: (U, stop: () => any) => any,
 ) {
 	const cancel = () => {
@@ -20,7 +32,7 @@ function iterate<T, U>(
 		let value: any = origin[i];
 
 		filtered = false;
-		
+
 		for (let j = 0; j < manipulators.length && !filtered; j++) {
 			value = manipulators[j](value, returnedCount, cancel);
 		}
@@ -35,11 +47,11 @@ function iterate<T, U>(
 	}
 }
 
-export default function List<T, U>(origin: T[]) {
-	const manipulators: Manipulator<T, U>[] = [];
+export default function List<T>(origin: T[]): ListAPI<T> {
+	const manipulators: Manipulator<T>[] = [];
 
-	const list = {
-		each(func: (U) => any) {
+	const list: ListAPI<T> = {
+		each(func: (T) => any) {
 			iterate(origin, manipulators, func);
 		},
 
@@ -73,12 +85,24 @@ export default function List<T, U>(origin: T[]) {
 			return found;
 		},
 
-		map(func: (T, i) => U) {
-			manipulators.push(func);
-			return list;
+		every(predicate: (T) => boolean) {
+			let failed = false;
+
+			iterate(origin, manipulators, (val, stop) => {
+				if (predicate(val)) {
+					stop();
+					failed = true;
+				}
+			});
+			return !failed;
 		},
 
-		filter(func: (T, i) => boolean) {
+		map<U>(func: (T, number) => U) {
+			manipulators.push(func);
+			return (list: any);
+		},
+
+		filter(func: (T, number) => boolean) {
 			manipulators.push((v, i, cancel): any => {
 				if (!func(v, i)) {
 					cancel();

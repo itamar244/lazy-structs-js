@@ -7,10 +7,20 @@
   "author": "itamar244 <itamary24@gmail.com>",
   "license": "MIT",
   "private": false,
+
+  "scripts": {
+    "build": "babel src/**.js --out-dir=dist/"
+  },
+
   "devDependencies": {
     "@types/node": "^10.3.4",
+    "babel-cli": "^7.0.0-beta.3",
+    "babel-core": "^7.0.0-beta.3",
+    "babel-node": "^7.0.0-beta.3",
+    "babel-plugin-transform-es2015-modules-commonjs": "^7.0.0-beta.3",
+    "babel-preset-flow": "^7.0.0-beta.3",
     "esm": "^3.0.52",
-    "ts-node": "^6.1.2",
+    "flow-bin": "^0.74.0",
     "typescript": "^2.9.2"
   }
 }
