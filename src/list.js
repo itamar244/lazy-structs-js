@@ -1,14 +1,15 @@
 // @flow
-import LazyBase from './base';
+import LazyBase, {
+	type BaseState,
+	createState,
+} from './base';
 
-type Updator = {|
-	filter: () => void,
-	stop: () => void,
-	set: (value: any) => void,
-|};
+interface State<T> extends BaseState {
+	value: T;
+	i: number;
+};
 
-type Mutator<T> = (arg: T, i: number, updator: Updator) => any;
-
+type Mutator<T> = (state: State<T>) => any;
 
 export default class List<T> extends LazyBase<
 	T,
@@ -23,39 +24,25 @@ export default class List<T> extends LazyBase<
 		return (new List(this._data, this._mutators.concat(mutator)): any);
 	}
 
-	__iterate<T, U>(func: (U, stop: () => any) => any) {
+	__iterate<U>(func: (U, stop: () => any) => any) {
 		const mutators = this._mutators;
-		const origin = this._data;
-		const updator = {
-			filter: () => {
-				filtered = true;
-			},
-			stop: () => {
-				stopped = true;
-			},
-			set: (nextValue) => {
-				value = nextValue;
-			},
-		};
-		let returnedCount = 0;
-		let stopped = false;
-		let filtered;
-		let value;
+		const data = this._data;
+		const {state, stop} = createState({i: 0, value: undefined});
 
-		for (let i = 0; i < origin.length; i++) {
-			filtered = false;
-			value = origin[i];
+		for (let i = 0; i < data.length; i++) {
+			state.filter = false;
+			state.value = data[i];
 
-			for (let j = 0; j < mutators.length && !filtered; j++) {
-				mutators[j](value, returnedCount, updator);
+			for (let j = 0; j < mutators.length && !state.filter; j++) {
+				mutators[j](state);
 			}
 
-			if (!filtered) {
-				returnedCount++;
-				func((value: any), updator.stop);
-				if (stopped) {
-					return;
-				}
+			if (state.stop) {
+				return;
+			}
+			if (!state.filter) {
+				state.i++;
+				func((state.value: any), stop);
 			}
 		}
 	}
@@ -104,15 +91,15 @@ export default class List<T> extends LazyBase<
 
 	// mutators
 	map<U>(func: (T, number) => U): List<U> {
-		return this.__withNewMutator((val, i, updator) => {
-			updator.set(func(val, i));
+		return this.__withNewMutator((state) => {
+			state.value = (func(state.value, state.i): any);
 		});
 	}
 
 	filter(func: (T, number) => bool): List<T> {
-		return this.__withNewMutator((val, i, updator): any => {
-			if (!func(val, i)) {
-				updator.filter();
+		return this.__withNewMutator((state) => {
+			if (!func(state.value, state.i)) {
+				state.filter = true;
 			}
 		});
 	}
@@ -120,9 +107,9 @@ export default class List<T> extends LazyBase<
 	slice(from: number, to: number): List<T> {
 		let sliced = 0;
 
-		return this.__withNewMutator((val, _, updator) => {
-			if (sliced < from) updator.filter();
-			if (sliced >= to) updator.stop();
+		return this.__withNewMutator((state) => {
+			if (sliced < from) state.filter = true;
+			if (sliced >= to) state.stop = true;
 			sliced += 1;
 		});
 	}

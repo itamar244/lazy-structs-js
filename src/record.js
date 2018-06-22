@@ -1,14 +1,15 @@
 // @flow
-import LazyBase from './base';
+import LazyBase, {
+	type BaseState,
+	createState,
+} from './base';
 
-type Updator = {|
-	filter: () => void,
-	stop: () => void,
-	setKey: (key: any) => void,
-	setValue: (value: any) => void,
-|};
+interface State<K, V> extends BaseState {
+	key: any;
+	value: any;
+};
 
-type Mutator<K, V> = (key: K, value: V, updator: Updator) => any;
+type Mutator<K, V> = (state: State<K, V>) => any;
 
 type Dict<K, V> = { [K]: V };
 
@@ -28,29 +29,23 @@ export default class Record<K, V> extends LazyBase<
 	__iterate(func: ([K, V], stop: () => any) => any) {
 		const data = this._data;
 		const mutators = this._mutators;
-		const updator = {
-			filter: () => { filtered = true; },
-			stop: () => { stopped = true; },
-			setKey: (nextKey) => { key = nextKey; },
-			setValue: (nextValue) => { value = nextValue; },
-		};
-		let stopped = false;
-		let filtered;
-		let key;
-		let value;
+		const {state, stop} = createState({
+			key: undefined,
+			value: undefined,
+		});
 
 		for (const _key in data) {
-			filtered = false;
-			key = _key;
-			value = data[(_key: any)];
+			state.filter = false;
+			state.key = (_key: any);
+			state.value = data[state.key];
 
-			for (let j = 0; j < mutators.length && !filtered; j++) {
-				mutators[j]((key: any), value, updator);
+			for (let j = 0; j < mutators.length && !state.filter; j++) {
+				mutators[j](state);
 			}
 
-			if (!filtered) {
-				func([(key: any), value], updator.stop);
-				if (stopped) {
+			if (!state.filter) {
+				func([(state.key: any), state.value], stop);
+				if (state.stop) {
 					return;
 				}
 			}
@@ -66,17 +61,17 @@ export default class Record<K, V> extends LazyBase<
 	}
 
 	map<T, U>(func: (K, V) => [T, U]): Record<T, U> {
-		return this.__withNewMutator((key, value, updator) => {
-			const res = func(key, value);
-			updator.setKey(res[0]);
-			updator.setValue(res[1]);
+		return this.__withNewMutator((state) => {
+			const res = func(state.key, state.value);
+			state.key = res[0];
+			state.value = res[1];
 		});
 	}
 
 	filter(func: (K, V) => bool): Record<K, V> {
-		return this.__withNewMutator((key, value, updator) => {
-			if (!func(key, value)) {
-				updator.filter();
+		return this.__withNewMutator((state) => {
+			if (!func(state.key, state.value)) {
+				state.filter = true;
 			}
 		});
 	}
