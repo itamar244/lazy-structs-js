@@ -53,11 +53,11 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 
 	finish() {
 		const arr = [];
-		this.__iterate(state => arr.push(state.value));
+		this.__iterate(state => { arr.push(state.value); });
 		return arr;
 	}
 
-	take(amount: number) {
+	take(amount: number): T[] {
 		if (amount === 0) return [];
 
 		const arr = [];
@@ -69,7 +69,6 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 		return arr;
 	}
 
-	some(predicate: (T) => bool) {
 	join(seperator: string = ','): string {
 		let string = '';
 		let first = true;
@@ -130,6 +129,7 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 		return (value: any);
 	}
 
+	some(predicate: (T) => bool): bool {
 		let found = false;
 
 		this.__iterate((state) => {
@@ -141,7 +141,7 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 		return found;
 	}
 
-	every(predicate: (T) => bool) {
+	every(predicate: (T) => bool): bool {
 		let failed = false;
 
 		this.__iterate((state) => {
@@ -172,7 +172,7 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 	slice(from: number, to: number): List<T> {
 		let sliced = 0;
 
-		return this._withNewMutator((state) => {
+		return this.mutate((state) => {
 			if (sliced < from) state.filter = true;
 			if (sliced >= to) state.stop = true;
 			sliced += 1;
