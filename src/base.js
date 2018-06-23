@@ -5,7 +5,6 @@ export interface BaseState {
 }
 
 export interface Settings {
-	selfMutations?: boolean;
 }
 
 export type Mutator<State> = (State) => any;
@@ -31,11 +30,6 @@ export default class LazyBase<Item, Data, State> {
 	}
 
 	_withNewMutator(mutator: Mutator<State>): this {
-		if (this._settings.selfMutations) {
-			this._mutators.push(mutator);
-			return this;
-		}
-
 		return new this.constructor(
 			this._data,
 			this._mutators.concat(mutator),
