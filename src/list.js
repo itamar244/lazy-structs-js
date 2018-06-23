@@ -70,6 +70,66 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 	}
 
 	some(predicate: (T) => bool) {
+	join(seperator: string = ','): string {
+		let string = '';
+		let first = true;
+		this.__iterate((state) => {
+			if (first) {
+				string = '' + (state.value: any);
+				first = false;
+			} else {
+				string += seperator + (state.value: any);
+			}
+		});
+		return string;
+	}
+
+	find(predicate: (T, number) => bool): T | void {
+		let value;
+		this.__iterate((state) => {
+			if (predicate(state.value, state.i)) {
+				state.stop = true;
+				value = state.value;
+			}
+		});
+		return value;
+	}
+
+	get(i: number): T | void {
+		let value;
+		this.__iterate((state) => {
+			if (state.i == i) {
+				value = state.value;
+				state.stop = true;
+			}
+		});
+		return value;
+	}
+
+	reduce(reducer: (T, T, number) => T): T {
+		let value;
+		this.__iterate((state) => {
+			value = state.i === 0 ? state.value : reducer(
+				value,
+				state.value,
+				state.i,
+			);
+		});
+		return (value: any);
+	}
+
+	reduceWithInit<U>(initialValue: U, reducer: (U, T, number) => U): U {
+		let value;
+		this.__iterate((state) => {
+			value = reducer(
+				state.i === 0 ? initialValue : value,
+				state.value,
+				state.i,
+			);
+		});
+		return (value: any);
+	}
+
 		let found = false;
 
 		this.__iterate((state) => {
