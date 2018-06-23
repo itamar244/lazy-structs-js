@@ -1,12 +1,9 @@
 // @flow
-import type {Settings} from './base';
+import type { Settings } from './base';
 import ListClass from './list';
 import RecordClass from './record';
 
-export function List<T>(
-	list: T[],
-	settings: Settings = {},
-): ListClass<T> {
+export function List<T>(list: T[], settings: Settings = {}): ListClass<T> {
 	return new ListClass(list, [], settings);
 }
 

@@ -9,14 +9,10 @@ import LazyBase, {
 interface State<T> extends BaseState {
 	value: T;
 	i: number;
-};
+}
 
 export default class List<T> extends LazyBase<T, T[], State<T>> {
-	constructor(
-		data: T[],
-		mutators: Mutator<State<T>>[],
-		settings: Settings,
-	) {
+	constructor(data: T[], mutators: Mutator<State<T>>[], settings: Settings) {
 		super(data, mutators, settings);
 	}
 
@@ -27,7 +23,7 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 	__iterate(func: (State<T>) => any): void {
 		const mutators = this._mutators;
 		const data = this._data;
-		const state: State<T> = createState({i: 0, value: undefined});
+		const state: State<T> = createState({ i: 0, value: undefined });
 
 		for (let i = 0; i < data.length; i++) {
 			state.filter = false;
@@ -53,7 +49,9 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 
 	finish() {
 		const arr = [];
-		this.__iterate(state => { arr.push(state.value); });
+		this.__iterate(state => {
+			arr.push(state.value);
+		});
 		return arr;
 	}
 
@@ -61,7 +59,7 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 		if (amount === 0) return [];
 
 		const arr = [];
-		this.__iterate((state) => {
+		this.__iterate(state => {
 			if (arr.push(state.value) === amount) {
 				state.stop = true;
 			}
@@ -72,7 +70,7 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 	join(seperator: string = ','): string {
 		let string = '';
 		let first = true;
-		this.__iterate((state) => {
+		this.__iterate(state => {
 			if (first) {
 				string = '' + (state.value: any);
 				first = false;
@@ -83,9 +81,9 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 		return string;
 	}
 
-	find(predicate: (T, number) => bool): T | void {
+	find(predicate: (T, number) => boolean): T | void {
 		let value;
-		this.__iterate((state) => {
+		this.__iterate(state => {
 			if (predicate(state.value, state.i)) {
 				state.stop = true;
 				value = state.value;
@@ -96,7 +94,7 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 
 	get(i: number): T | void {
 		let value;
-		this.__iterate((state) => {
+		this.__iterate(state => {
 			if (state.i == i) {
 				value = state.value;
 				state.stop = true;
@@ -107,19 +105,16 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 
 	reduce(reducer: (T, T, number) => T): T {
 		let value;
-		this.__iterate((state) => {
-			value = state.i === 0 ? state.value : reducer(
-				value,
-				state.value,
-				state.i,
-			);
+		this.__iterate(state => {
+			value =
+				state.i === 0 ? state.value : reducer(value, state.value, state.i);
 		});
 		return (value: any);
 	}
 
 	reduceWithInit<U>(initialValue: U, reducer: (U, T, number) => U): U {
 		let value;
-		this.__iterate((state) => {
+		this.__iterate(state => {
 			value = reducer(
 				state.i === 0 ? initialValue : value,
 				state.value,
@@ -129,10 +124,10 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 		return (value: any);
 	}
 
-	some(predicate: (T) => bool): bool {
+	some(predicate: T => boolean): boolean {
 		let found = false;
 
-		this.__iterate((state) => {
+		this.__iterate(state => {
 			if (predicate(state.value)) {
 				state.stop = true;
 				found = true;
@@ -141,10 +136,10 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 		return found;
 	}
 
-	every(predicate: (T) => bool): bool {
+	every(predicate: T => boolean): boolean {
 		let failed = false;
 
-		this.__iterate((state) => {
+		this.__iterate(state => {
 			if (predicate(state.value)) {
 				state.stop = true;
 				failed = true;
@@ -156,13 +151,13 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 	// mutators
 	map<U>(func: (T, number) => U): List<U> {
 		// $FlowIgnore
-		return this.mutate((state) => {
+		return this.mutate(state => {
 			state.value = (func(state.value, state.i): any);
 		});
 	}
 
-	filter(func: (T, number) => bool): List<T> {
-		return this.mutate((state) => {
+	filter(func: (T, number) => boolean): List<T> {
+		return this.mutate(state => {
 			if (!func(state.value, state.i)) {
 				state.filter = true;
 			}
@@ -172,7 +167,7 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 	slice(from: number, to: number): List<T> {
 		let sliced = 0;
 
-		return this.mutate((state) => {
+		return this.mutate(state => {
 			if (sliced < from) state.filter = true;
 			if (sliced >= to) state.stop = true;
 			sliced += 1;

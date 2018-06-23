@@ -1,13 +1,12 @@
 // @flow
 export interface BaseState {
-	filter: bool,
-	stop: bool,
+	filter: boolean;
+	stop: boolean;
 }
 
-export interface Settings {
-}
+export interface Settings {}
 
-export type Mutator<State> = (State) => any;
+export type Mutator<State> = State => any;
 
 export function createState<State: BaseState>(partial: $Shape<State>): State {
 	return Object.assign(partial, {
@@ -21,7 +20,7 @@ export default class LazyBase<Item, Data, State> {
 	+_mutators: Mutator<State>[];
 	+_settings: Settings;
 	+__iterate: (func: (State) => any) => any;
-	+__getValueFromState: (State) => Item;
+	+__getValueFromState: State => Item;
 
 	constructor(data: Data, mutators: Mutator<State>[], settings: Settings) {
 		this._data = data;
@@ -37,13 +36,15 @@ export default class LazyBase<Item, Data, State> {
 		);
 	}
 
-	each(func: (Item) => any) {
-		this.__iterate((state) => func(this.__getValueFromState(state)));
+	each(func: Item => any) {
+		this.__iterate(state => func(this.__getValueFromState(state)));
 	}
 
 	count() {
 		let size = 0;
-		this.__iterate(() => { ++size; });
+		this.__iterate(() => {
+			++size;
+		});
 		return size;
 	}
 }

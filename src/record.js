@@ -9,14 +9,14 @@ import LazyBase, {
 interface State<K, V> extends BaseState {
 	key: K;
 	value: V;
-};
+}
 
 type Dict<K, V> = { [K]: V };
 
 export default class Record<K, V> extends LazyBase<
 	[K, V],
 	Dict<K, V>,
-	State<K, V>
+	State<K, V>,
 > {
 	constructor(
 		data: Dict<K, V>,
@@ -73,8 +73,8 @@ export default class Record<K, V> extends LazyBase<
 		});
 	}
 
-	filter(func: (K, V) => bool): Record<K, V> {
-		return this.mutate((state) => {
+	filter(func: (K, V) => boolean): Record<K, V> {
+		return this.mutate(state => {
 			if (!func(state.key, state.value)) {
 				state.filter = true;
 			}
