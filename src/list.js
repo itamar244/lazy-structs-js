@@ -96,13 +96,13 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 	// mutators
 	map<U>(func: (T, number) => U): List<U> {
 		// $FlowIgnore
-		return this._withNewMutator((state) => {
+		return this.mutate((state) => {
 			state.value = (func(state.value, state.i): any);
 		});
 	}
 
 	filter(func: (T, number) => bool): List<T> {
-		return this._withNewMutator((state) => {
+		return this.mutate((state) => {
 			if (!func(state.value, state.i)) {
 				state.filter = true;
 			}

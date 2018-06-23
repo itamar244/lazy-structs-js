@@ -29,7 +29,7 @@ export default class LazyBase<Item, Data, State> {
 		this._settings = settings;
 	}
 
-	_withNewMutator(mutator: Mutator<State>): this {
+	mutate(mutator: Mutator<State>): this {
 		return new this.constructor(
 			this._data,
 			this._mutators.concat(mutator),

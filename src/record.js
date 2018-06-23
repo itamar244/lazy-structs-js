@@ -66,7 +66,7 @@ export default class Record<K, V> extends LazyBase<
 
 	map<T, U>(func: (K, V) => [T, U]): Record<T, U> {
 		// $FlowIgnore
-		return this._withNewMutator((state: State<T, U>) => {
+		return this.mutate((state: State<T, U>) => {
 			const res = func(state.key, state.value);
 			state.key = res[0];
 			state.value = res[1];
@@ -74,7 +74,7 @@ export default class Record<K, V> extends LazyBase<
 	}
 
 	filter(func: (K, V) => bool): Record<K, V> {
-		return this._withNewMutator((state) => {
+		return this.mutate((state) => {
 			if (!func(state.key, state.value)) {
 				state.filter = true;
 			}
