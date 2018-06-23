@@ -26,7 +26,11 @@ export default class Record<K, V> extends LazyBase<
 		super(data, mutators, settings);
 	}
 
-	__iterate(func: ([K, V], stop: () => any) => any) {
+	__getValueFromState(state: State<K, V>): [K, V] {
+		return [state.key, state.value];
+	}
+
+	__iterate(func: (State<K, V>) => any) {
 		const data = this._data;
 		const mutators = this._mutators;
 		const {state, stop} = createState({
@@ -44,7 +48,7 @@ export default class Record<K, V> extends LazyBase<
 			}
 
 			if (!state.filter) {
-				func([(state.key: any), state.value], stop);
+				func(state);
 				if (state.stop) {
 					return;
 				}
@@ -52,10 +56,10 @@ export default class Record<K, V> extends LazyBase<
 		}
 	}
 
-	finish() {
+	finish(): Dict<K, V> {
 		const obj: Dict<K, V> = {};
-		this.__iterate(item => {
-			obj[item[0]] = item[1];
+		this.__iterate(state => {
+			obj[state.key] = state.value;
 		});
 		return obj;
 	}

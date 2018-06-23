@@ -20,8 +20,11 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 		super(data, mutators, settings);
 	}
 
+	__getValueFromState(state: State<T>): T {
+		return state.value;
+	}
 
-	__iterate<U>(func: (U, stop: () => any) => any) {
+	__iterate<U>(func: (State<U>) => any): void {
 		const mutators = this._mutators;
 		const data = this._data;
 		const {state, stop} = createState({i: 0, value: undefined});
@@ -38,15 +41,15 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 				return;
 			}
 			if (!state.filter) {
+				func(state);
 				state.i++;
-				func((state.value: any), stop);
 			}
 		}
 	}
 
 	finish() {
 		const arr = [];
-		this.__iterate(item => arr.push(item));
+		this.__iterate(state => arr.push(state.value));
 		return arr;
 	}
 
@@ -54,9 +57,9 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 		if (amount === 0) return [];
 
 		const arr = [];
-		this.__iterate((item, stop) => {
-			if (arr.push(item) === amount) {
-				stop();
+		this.__iterate((state) => {
+			if (arr.push(state.value) === amount) {
+				state.stop = true;
 			}
 		});
 		return arr;
@@ -65,9 +68,9 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 	some(predicate: (T) => bool) {
 		let found = false;
 
-		this.__iterate((val, stop) => {
-			if (predicate(val)) {
-				stop();
+		this.__iterate((state) => {
+			if (predicate(state.value)) {
+				state.stop = true;
 				found = true;
 			}
 		});
@@ -77,9 +80,9 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 	every(predicate: (T) => bool) {
 		let failed = false;
 
-		this.__iterate((val, stop) => {
-			if (predicate(val)) {
-				stop();
+		this.__iterate((state) => {
+			if (predicate(state.value)) {
+				state.stop = true;
 				failed = true;
 			}
 		});

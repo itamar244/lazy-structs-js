@@ -28,7 +28,8 @@ export default class LazyBase<Item, Data, State> {
 	+_data: Data;
 	+_mutators: Mutator<State>[];
 	+_settings: Settings;
-	+__iterate: (func: (Item, () => any) => any) => any;
+	+__iterate: (func: (State) => any) => any;
+	+__getValueFromState: (State) => Item;
 
 	constructor(data: Data, mutators: Mutator<State>[], settings: Settings) {
 		this._data = data;
@@ -50,7 +51,7 @@ export default class LazyBase<Item, Data, State> {
 	}
 
 	each(func: (Item) => any) {
-		this.__iterate((item) => func(item));
+		this.__iterate((state) => func(this.__getValueFromState(state)));
 	}
 
 	count() {
