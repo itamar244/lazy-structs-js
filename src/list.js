@@ -24,16 +24,20 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 		return state.value;
 	}
 
-	__iterate<U>(func: (State<U>) => any): void {
+	__iterate(func: (State<T>) => any): void {
 		const mutators = this._mutators;
 		const data = this._data;
-		const {state, stop} = createState({i: 0, value: undefined});
+		const state: State<T> = createState({i: 0, value: undefined});
 
 		for (let i = 0; i < data.length; i++) {
 			state.filter = false;
 			state.value = data[i];
 
-			for (let j = 0; j < mutators.length && !state.filter; j++) {
+			for (
+				let j = 0;
+				j < mutators.length && !state.filter && !state.stop;
+				j++
+			) {
 				mutators[j](state);
 			}
 

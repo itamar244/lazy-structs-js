@@ -10,18 +10,11 @@ export interface Settings {
 
 export type Mutator<State> = (State) => any;
 
-export function createState<State: BaseState>(
-	partial: $Shape<State>,
-): { state: State, stop: () => void } {
-	const state = Object.assign(partial, {
+export function createState<State: BaseState>(partial: $Shape<State>): State {
+	return Object.assign(partial, {
 		filter: false,
 		stop: false,
 	});
-
-	return {
-		state,
-		stop: () => { state.stop = true; },
-	};
 }
 
 export default class LazyBase<Item, Data, State> {

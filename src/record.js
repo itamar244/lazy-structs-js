@@ -7,8 +7,8 @@ import LazyBase, {
 } from './base';
 
 interface State<K, V> extends BaseState {
-	key: any;
-	value: any;
+	key: K;
+	value: V;
 };
 
 type Dict<K, V> = { [K]: V };
@@ -33,7 +33,7 @@ export default class Record<K, V> extends LazyBase<
 	__iterate(func: (State<K, V>) => any) {
 		const data = this._data;
 		const mutators = this._mutators;
-		const {state, stop} = createState({
+		const state: State<K, V> = createState({
 			key: undefined,
 			value: undefined,
 		});
@@ -66,7 +66,7 @@ export default class Record<K, V> extends LazyBase<
 
 	map<T, U>(func: (K, V) => [T, U]): Record<T, U> {
 		// $FlowIgnore
-		return this._withNewMutator((state) => {
+		return this._withNewMutator((state: State<T, U>) => {
 			const res = func(state.key, state.value);
 			state.key = res[0];
 			state.value = res[1];
