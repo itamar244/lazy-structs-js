@@ -1,6 +1,8 @@
 // @flow
 import LazyBase, {
 	type BaseState,
+	type Mutator,
+	type Settings,
 	createState,
 } from './base';
 
@@ -9,21 +11,19 @@ interface State<K, V> extends BaseState {
 	value: any;
 };
 
-type Mutator<K, V> = (state: State<K, V>) => any;
-
 type Dict<K, V> = { [K]: V };
 
 export default class Record<K, V> extends LazyBase<
 	[K, V],
 	Dict<K, V>,
-	Mutator<K, V>
+	State<K, V>
 > {
-	constructor(data: Dict<K, V>, mutators: Mutator<K, V>[]) {
-		super(data, mutators);
-	}
-
-	__withNewMutator<T, U>(mutator: Mutator<K, V>): Record<T, U> {
-		return (new Record(this._data, this._mutators.concat(mutator)): any);
+	constructor(
+		data: Dict<K, V>,
+		mutators: Array<(State<K, V>) => any>,
+		settings: Settings,
+	) {
+		super(data, mutators, settings);
 	}
 
 	__iterate(func: ([K, V], stop: () => any) => any) {
@@ -61,7 +61,8 @@ export default class Record<K, V> extends LazyBase<
 	}
 
 	map<T, U>(func: (K, V) => [T, U]): Record<T, U> {
-		return this.__withNewMutator((state) => {
+		// $FlowIgnore
+		return this._withNewMutator((state) => {
 			const res = func(state.key, state.value);
 			state.key = res[0];
 			state.value = res[1];
@@ -69,7 +70,7 @@ export default class Record<K, V> extends LazyBase<
 	}
 
 	filter(func: (K, V) => bool): Record<K, V> {
-		return this.__withNewMutator((state) => {
+		return this._withNewMutator((state) => {
 			if (!func(state.key, state.value)) {
 				state.filter = true;
 			}

@@ -1,6 +1,8 @@
 // @flow
 import LazyBase, {
 	type BaseState,
+	type Settings,
+	type Mutator,
 	createState,
 } from './base';
 
@@ -9,20 +11,15 @@ interface State<T> extends BaseState {
 	i: number;
 };
 
-type Mutator<T> = (state: State<T>) => any;
-
-export default class List<T> extends LazyBase<
-	T,
-	T[],
-	Mutator<T>
-> {
-	constructor(data: T[], mutators: Mutator<T>[]) {
-		super(data, mutators);
+export default class List<T> extends LazyBase<T, T[], State<T>> {
+	constructor(
+		data: T[],
+		mutators: Mutator<State<T>>[],
+		settings: Settings,
+	) {
+		super(data, mutators, settings);
 	}
 
-	__withNewMutator<U>(mutator: Mutator<T>): List<U> {
-		return (new List(this._data, this._mutators.concat(mutator)): any);
-	}
 
 	__iterate<U>(func: (U, stop: () => any) => any) {
 		const mutators = this._mutators;
@@ -91,13 +88,14 @@ export default class List<T> extends LazyBase<
 
 	// mutators
 	map<U>(func: (T, number) => U): List<U> {
-		return this.__withNewMutator((state) => {
+		// $FlowIgnore
+		return this._withNewMutator((state) => {
 			state.value = (func(state.value, state.i): any);
 		});
 	}
 
 	filter(func: (T, number) => bool): List<T> {
-		return this.__withNewMutator((state) => {
+		return this._withNewMutator((state) => {
 			if (!func(state.value, state.i)) {
 				state.filter = true;
 			}
@@ -107,7 +105,7 @@ export default class List<T> extends LazyBase<
 	slice(from: number, to: number): List<T> {
 		let sliced = 0;
 
-		return this.__withNewMutator((state) => {
+		return this._withNewMutator((state) => {
 			if (sliced < from) state.filter = true;
 			if (sliced >= to) state.stop = true;
 			sliced += 1;
