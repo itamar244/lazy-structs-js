@@ -6,7 +6,7 @@ export interface BaseState {
 
 export interface Settings {}
 
-export type Mutator<State> = State => any;
+export type Mutator<State> = State => mixed;
 
 export function createState<State: BaseState>(partial: $Shape<State>): State {
 	return Object.assign(partial, {
@@ -19,7 +19,7 @@ export default class LazyBase<Item, Data, State> {
 	+_data: Data;
 	+_mutators: Mutator<State>[];
 	+_settings: Settings;
-	+__iterate: (func: (State) => any) => any;
+	+__iterate: ((State) => mixed) => mixed;
 	+__getValueFromState: State => Item;
 
 	constructor(data: Data, mutators: Mutator<State>[], settings: Settings) {
@@ -36,8 +36,10 @@ export default class LazyBase<Item, Data, State> {
 		);
 	}
 
-	each(func: Item => any) {
-		this.__iterate(state => func(this.__getValueFromState(state)));
+	each(func: Item => mixed) {
+		this.__iterate(state => {
+			func(this.__getValueFromState(state));
+		});
 	}
 
 	count() {

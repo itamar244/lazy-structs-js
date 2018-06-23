@@ -5,6 +5,7 @@ import LazyBase, {
 	type Mutator,
 	createState,
 } from './base';
+import { toString } from './utils';
 
 interface State<T> extends BaseState {
 	value: T;
@@ -20,7 +21,7 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 		return state.value;
 	}
 
-	__iterate(func: (State<T>) => any): void {
+	__iterate(func: (State<T>) => mixed): void {
 		const mutators = this._mutators;
 		const data = this._data;
 		const state: State<T> = createState({ i: 0, value: undefined });
@@ -72,10 +73,10 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 		let first = true;
 		this.__iterate(state => {
 			if (first) {
-				string = '' + (state.value: any);
+				string = toString(state.value);
 				first = false;
 			} else {
-				string += seperator + (state.value: any);
+				string += seperator + toString(state.value);
 			}
 		});
 		return string;
@@ -95,7 +96,7 @@ export default class List<T> extends LazyBase<T, T[], State<T>> {
 	get(i: number): T | void {
 		let value;
 		this.__iterate(state => {
-			if (state.i == i) {
+			if (state.i === i) {
 				value = state.value;
 				state.stop = true;
 			}
